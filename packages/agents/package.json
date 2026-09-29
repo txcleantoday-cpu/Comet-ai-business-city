@@ -5,8 +5,8 @@
   "type": "module",
   "exports": "./src/index.mjs",
   "dependencies": {
-    "@abc/core":"workspace:*",
-    "@abc/db":"workspace:*",
-    "@abc/integrations":"workspace:*"
+    "@abc/core":"file:../core",
+    "@abc/db":"file:../db",
+    "@abc/integrations":"file:../integrations"
   }
 }
