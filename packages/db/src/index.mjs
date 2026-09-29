@@ -16,7 +16,7 @@ export async function appendEvent({jobId=null,factoryId=null,agentId=null,type,p
   const r=await client.query(`INSERT INTO events(job_id,factory_id,agent_id,type,payload) VALUES($1,$2,$3,$4,$5::jsonb) RETURNING *`,[jobId,factoryId,agentId,type,JSON.stringify(payload)]);return r.rows[0];
 }
 
-export async function createJobFromCommand({text,requestedBy='owner',forcedFactory,input={}}){
+export async function createJobFromCommand({text,requestedBy='owner',forcedFactory=null,input={}}){
   const wf=workflowForCommand(text,forcedFactory);
   return tx(async c=>{
     const business=(await c.query(`SELECT * FROM businesses WHERE slug=$1`,[wf.factory])).rows[0] || (await c.query(`SELECT * FROM businesses WHERE slug='command'`)).rows[0];
@@ -145,7 +145,7 @@ export async function listState(){
   return {jobs:jobs.rows,approvals:approvals.rows,events:events.rows,agents:agents.rows,factories:factories.rows,products:products.rows,integrations:integrations.rows};
 }
 
-export async function storeMedia({ownerId=null,sourceAssetId=null,assetType,lineage='original',bytes,mimeType,width=null,height=null,rightsStatus='owner_supplied',aiModified=false,aiGenerated=false,filename=null,metadata={}}){
+export async function storeMedia({ownerId=null,sourceAssetId=null,assetType,lineage='original',bytes,mimeType,width=null,height=null,rightsStatus='owner_supplied',aiModified=false,aiGenerated=false,filename='',metadata={}}){
   const checksum=(await import('node:crypto')).createHash('sha256').update(bytes).digest('hex');
   const r=await query(`INSERT INTO media_assets(owner_id,source_asset_id,asset_type,lineage,storage_url,mime_type,width,height,checksum,rights_status,ai_modified,ai_generated,filename,metadata,blob_data) VALUES($1,$2,$3,$4,'db://media',$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14) RETURNING *`,[ownerId,sourceAssetId,assetType,lineage,mimeType,width,height,checksum,rightsStatus,aiModified,aiGenerated,filename,JSON.stringify(metadata),Buffer.from(bytes)]);return r.rows[0];
 }
