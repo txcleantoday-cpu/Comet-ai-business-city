@@ -19,11 +19,11 @@
     "react": "latest",
     "react-dom": "latest",
     "pg": "latest",
-    "@abc/core": "workspace:*",
-    "@abc/db": "workspace:*",
-    "@abc/agents": "workspace:*",
-    "@abc/integrations": "workspace:*",
-    "@abc/workflows": "workspace:*"
+    "@abc/core": "file:packages/core",
+    "@abc/db": "file:packages/db",
+    "@abc/agents": "file:packages/agents",
+    "@abc/integrations": "file:packages/integrations",
+    "@abc/workflows": "file:packages/workflows"
   },
   "devDependencies": {
     "typescript": "latest",
