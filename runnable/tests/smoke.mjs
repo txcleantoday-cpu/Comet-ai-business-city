@@ -1,1 +1,62 @@
-import {spawn} from 'node:child_process';import {setTimeout as sleep} from 'node:timers/promises';const port=8799;const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url).pathname,env:{...process.env,ABC_PORT:String(port),SIMULATION_MODE:'true'},stdio:['ignore','pipe','pipe']});try{await sleep(700);const base=`http://127.0.0.1:${port}`;let r=await fetch(`${base}/api/health`);if(!r.ok)throw new Error('health failed');r=await fetch(`${base}/api/commands`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:'Find 5 medical practices in Plano and prepare outreach'})});const job=await r.json();if(!job.id)throw new Error('job not created');for(let i=0;i<7;i++){await fetch(`${base}/api/worker/tick`,{method:'POST'})}const s=await (await fetch(`${base}/api/state`)).json();const j=s.jobs.find(x=>x.id===job.id);if(j.status!=='waiting_approval')throw new Error(`expected waiting_approval, got ${j.status}`);const a=s.approvals.find(x=>x.job_id===job.id&&x.status==='pending');if(!a)throw new Error('approval missing');await fetch(`${base}/api/approvals/${a.id}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({decision:'approved'})});await fetch(`${base}/api/worker/tick`,{method:'POST'});const s2=await (await fetch(`${base}/api/state`)).json();const j2=s2.jobs.find(x=>x.id===job.id);if(j2.status!=='completed')throw new Error(`expected completed, got ${j2.status}`);console.log(JSON.stringify({ok:true,jobId:job.id,status:j2.status,events:s2.events.length}))}finally{child.kill('SIGTERM')}
+import {spawn} from 'node:child_process';
+import {setTimeout as sleep} from 'node:timers/promises';
+
+const port=8799;
+const child=spawn(process.execPath,['server.mjs'],{
+  cwd:new URL('..',import.meta.url).pathname,
+  env:{...process.env,ABC_PORT:String(port),SIMULATION_MODE:'true'},
+  stdio:['ignore','pipe','pipe']
+});
+
+let stderr='';
+child.stderr.on('data',c=>{stderr+=String(c)});
+
+async function waitForHealth(base){
+  let lastError;
+  for(let i=0;i<30;i++){
+    if(child.exitCode!==null) throw new Error(`server exited before health check: ${stderr}`);
+    try{
+      const r=await fetch(`${base}/api/health`);
+      if(r.ok)return;
+    }catch(e){lastError=e}
+    await sleep(200);
+  }
+  throw new Error(`server did not become ready: ${lastError?.message||'timeout'} ${stderr}`);
+}
+
+try{
+  const base=`http://127.0.0.1:${port}`;
+  await waitForHealth(base);
+
+  let r=await fetch(`${base}/api/commands`,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({text:'Find 5 medical practices in Plano and prepare outreach'})
+  });
+  const job=await r.json();
+  if(!job.id)throw new Error('job not created');
+
+  for(let i=0;i<7;i++)await fetch(`${base}/api/worker/tick`,{method:'POST'});
+
+  const s=await (await fetch(`${base}/api/state`)).json();
+  const j=s.jobs.find(x=>x.id===job.id);
+  if(j.status!=='waiting_approval')throw new Error(`expected waiting_approval, got ${j.status}`);
+
+  const a=s.approvals.find(x=>x.job_id===job.id&&x.status==='pending');
+  if(!a)throw new Error('approval missing');
+
+  await fetch(`${base}/api/approvals/${a.id}`,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({decision:'approved'})
+  });
+  await fetch(`${base}/api/worker/tick`,{method:'POST'});
+
+  const s2=await (await fetch(`${base}/api/state`)).json();
+  const j2=s2.jobs.find(x=>x.id===job.id);
+  if(j2.status!=='completed')throw new Error(`expected completed, got ${j2.status}`);
+
+  console.log(JSON.stringify({ok:true,jobId:job.id,status:j2.status,events:s2.events.length}));
+}finally{
+  child.kill('SIGTERM');
+}
