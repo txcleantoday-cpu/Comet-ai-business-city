@@ -5,23 +5,31 @@ const port=8799;
 const child=spawn(process.execPath,['server.mjs'],{
   cwd:new URL('..',import.meta.url).pathname,
   env:{...process.env,ABC_PORT:String(port),SIMULATION_MODE:'true'},
-  stdio:['ignore','pipe','pipe']
+  stdio:['ignore','inherit','inherit']
 });
 
-let stderr='';
-child.stderr.on('data',c=>{stderr+=String(c)});
+let startupError;
+child.on('error',error=>{startupError=error});
 
 async function waitForHealth(base){
+  const deadline=Date.now()+10_000;
   let lastError;
-  for(let i=0;i<30;i++){
-    if(child.exitCode!==null) throw new Error(`server exited before health check: ${stderr}`);
+  while(Date.now()<deadline){
+    if(startupError)throw startupError;
+    if(child.exitCode!==null||child.signalCode!==null){
+      throw new Error(`server exited before health check (code: ${child.exitCode}, signal: ${child.signalCode})`);
+    }
     try{
-      const r=await fetch(`${base}/api/health`);
+      const r=await fetch(`${base}/api/health`,{
+        signal:AbortSignal.timeout(Math.max(1,Math.min(500,deadline-Date.now())))
+      });
+      await r.body?.cancel();
       if(r.ok)return;
+      lastError=new Error(`health returned HTTP ${r.status}`);
     }catch(e){lastError=e}
-    await sleep(200);
+    await sleep(Math.max(0,Math.min(200,deadline-Date.now())));
   }
-  throw new Error(`server did not become ready: ${lastError?.message||'timeout'} ${stderr}`);
+  throw new Error(`server did not become ready within 10s: ${lastError?.message||'timeout'}`);
 }
 
 try{
