@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "exports": "./src/index.mjs",
-  "dependencies": {"@abc/core":"workspace:*"}
+  "dependencies": {"@abc/core":"file:../core"}
 }
