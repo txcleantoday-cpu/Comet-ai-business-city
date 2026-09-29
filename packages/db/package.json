@@ -1,0 +1,8 @@
+{
+  "name": "@abc/db",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "dependencies": {"pg":"latest","@abc/core":"workspace:*","@abc/workflows":"workspace:*"}
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@abc/agents",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "dependencies": {
+    "@abc/core":"workspace:*",
+    "@abc/db":"workspace:*",
+    "@abc/integrations":"workspace:*"
+  }
+}

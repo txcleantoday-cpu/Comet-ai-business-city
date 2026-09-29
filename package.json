@@ -1,0 +1,34 @@
+{
+  "name": "ai-business-city-netlify-free",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:init": "node scripts/init-db.mjs",
+    "test:runnable": "node runnable/tests/smoke.mjs",
+    "run:runnable": "node runnable/server.mjs"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "pg": "latest",
+    "@abc/core": "workspace:*",
+    "@abc/db": "workspace:*",
+    "@abc/agents": "workspace:*",
+    "@abc/integrations": "workspace:*",
+    "@abc/workflows": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}
