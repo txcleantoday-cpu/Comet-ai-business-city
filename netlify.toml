@@ -8,4 +8,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Required values are requested privately by Netlify's Deploy to Netlify flow.
+# Do not place real secrets in this public repository.
+[template.environment]
+  DATABASE_URL = "Paste the pooled Neon DATABASE_URL for lively-lab-44120606"
+  APP_OWNER_TOKEN = "Create a long private token used to unlock the owner control panel"
+
 # The Next.js runtime is handled automatically by Netlify's OpenNext adapter.
